@@ -24,27 +24,45 @@ var mapKey = {
     2 : 'sushi',
     3 : 'onigiri'
 }
-
+var world = bridger();
 function drawMap(){
     var content = " ";
-    content += "<div id = 'wall00' class = 'wall'></div>";
+    //content += "<div id = 'wall00' class = 'wall'></div>";
+    //document.getElementById('map').innerHTML = content;
+    //content += "<div id = '"+mapKey[0]+"00' class = '"+mapKey[0]+"'></div>";
     console.log(content);
     document.getElementById('map').innerHTML = content;
-    //console.log(document.getElementById('map').innerHTML);
+    //block1.forEach(tester());
+    for(sectionY = 0; sectionY < world.length; sectionY++ ){
+        console.log("section y "+sectionY);
+        for(sectionX = 0; sectionX < world[sectionY].length; sectionX++){
+            console.log("section x "+sectionX);
+            for(blockY = 0; blockY < block1.length; blockY++){
+                console.log("blockY "+ blockY);
+                for(blockX = 0; blockX < block1[0].length; blockX++){
+                    //console.log("Inner Loop, block X "+ blockX);
+                    var address = addressMachine(sectionY, sectionX,blockY,blockX);
+                    console.log(address);
+                    content += "<div id = '"+mapKey[0]+"00' class = '"+mapKey[0]+"'></div>";
+                }
+            }
+        }
+    }
+console.log(world);
+}
+function addressMachine(secY, secX, blockY,blockX){
+   var address = ""+secY+""+secX+""+blockY+""+blockX;
+   return(address);
 }
 function mapGen(){
     
 }
 
-//bridger takes blocks from the block library and connects them with short arrays
-function bridger(){
-    var world = [[blockIndex[0],blockIndex[0],blockIndex[0]],
-                 [blockIndex[0],blockIndex[0],blockIndex[0]]];
-                 
-}
+
+
 
 //block library holds predefined map blocks and can be called upon to plop them out.
-function blockLibrary(){
+// BLOCK LIBRARY GLOBAL//
 
     var block1 = [
         [0,0,0,0,0,0,0,0,0,0],
@@ -78,5 +96,12 @@ function blockLibrary(){
         0 : block1, // A big ole empty block.
         1 : block2 // A big block of sushi!
     }
-}
+// BLOCK LIBRARY GLOBAL.//  
 
+//bridger takes blocks from the block library and connects them with short arrays
+function bridger(){
+    var world = [[block1,block1,block1],
+                 [block1,block1,block1]];
+    return(world);
+                 
+}
