@@ -6,11 +6,15 @@
 
 //core functionality variables, like frame speed
 var frameSpeed = 64;
+var world; 
 //end of core variables
 function start(){
     console.log("start");
     setInterval(main, frameSpeed);
+    world = bridger();
     drawMap();
+    console.log(bridger());
+    console.log(world);
 }
 
 //Gameloop that updates every x ms set by framespeed.
@@ -24,37 +28,45 @@ var mapKey = {
     2 : 'sushi',
     3 : 'onigiri'
 }
-var world = bridger();
+
 function drawMap(){
     var content = " ";
-    //content += "<div id = 'wall00' class = 'wall'></div>";
-    //document.getElementById('map').innerHTML = content;
-    //content += "<div id = '"+mapKey[0]+"00' class = '"+mapKey[0]+"'></div>";
-    console.log(content);
     document.getElementById('map').innerHTML = content;
-    //block1.forEach(tester());
     for(sectionY = 0; sectionY < world.length; sectionY++ ){
-        console.log("section y "+sectionY);
         for(sectionX = 0; sectionX < world[sectionY].length; sectionX++){
-            console.log("section x "+sectionX);
             for(blockY = 0; blockY < block1.length; blockY++){
-                console.log("blockY "+ blockY);
                 for(blockX = 0; blockX < block1[0].length; blockX++){
-                    //console.log("Inner Loop, block X "+ blockX);
                     var address = addressMachine(sectionY, sectionX,blockY,blockX);
-                    console.log(address);
-                    content += "<div id = '"+mapKey[0]+"00' class = '"+mapKey[0]+"'></div>";
+                    content += "<div id = 'loc"+address+"' class = '"+mapKey[tileType(sectionY,sectionX,blockY,blockX)]+"' style = \"top:"+pixelPlaceY(sectionY,blockY)+"px; "; 
+                    content += "left:"+pixelPlaceX(sectionX,blockX)+"px;\"></div>";
+                    document.getElementById('map').innerHTML = content;
                 }
             }
         }
     }
-console.log(world);
 }
+
+// calculates the pixel location for a block to draw, Y axis
+function pixelPlaceY(secY, blockY){
+    return((400 * secY)+(40 * blockY));
+}
+
+// calculates the pixel location for a block to draw, X axis
+function pixelPlaceX(secX, blockX){
+    return((400 * secX)+(40 * blockX));
+}
+
+// creates addresses so that each block can be selected by ID
 function addressMachine(secY, secX, blockY,blockX){
    var address = ""+secY+""+secX+""+blockY+""+blockX;
+   //This was unneccessary come to find out. The "" sections that is.
    return(address);
 }
-function mapGen(){
+
+//doesn't do anything yet.  I forgot what we were doing with this.
+function tileType(secY, secX, blockY, blockX){
+    console.log("type"+world[secY][secX][blockY][blockX]);
+    return(world[secY][secX][blockY][blockX]);
     
 }
 
@@ -92,16 +104,19 @@ function mapGen(){
     ]
 
 
-    var blockIndex = {
+    /*var blockIndex = {
         0 : block1, // A big ole empty block.
         1 : block2 // A big block of sushi!
-    }
+    }*/
 // BLOCK LIBRARY GLOBAL.//  
 
 //bridger takes blocks from the block library and connects them with short arrays
 function bridger(){
-    var world = [[block1,block1,block1],
-                 [block1,block1,block1]];
+    var world = [
+        [block1,block2,block1],
+        [block1,block1,block1]
+    ];
+    console.log(world);
     return(world);
                  
 }
