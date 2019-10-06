@@ -12,9 +12,10 @@ function start(){
     console.log("start");
     setInterval(main, frameSpeed);
     world = bridger();
-    drawMap();
-    console.log(bridger());
-    console.log(world);
+    mapGen();
+    rando();
+    //console.log(bridger());
+    //console.log(world);
 }
 
 //Gameloop that updates every x ms set by framespeed.
@@ -30,6 +31,11 @@ var mapKey = {
 }
 
 function drawMap(){
+
+}
+
+function mapGen(){
+    
     var content = " ";
     document.getElementById('map').innerHTML = content;
     for(sectionY = 0; sectionY < world.length; sectionY++ ){
@@ -44,6 +50,7 @@ function drawMap(){
             }
         }
     }
+    console.log(world);
 }
 
 // calculates the pixel location for a block to draw, Y axis
@@ -63,9 +70,9 @@ function addressMachine(secY, secX, blockY,blockX){
    return(address);
 }
 
-//doesn't do anything yet.  I forgot what we were doing with this.
+//returns the tile type for the sake of readability.
 function tileType(secY, secX, blockY, blockX){
-    console.log("type"+world[secY][secX][blockY][blockX]);
+    //console.log("type"+world[secY][secX][blockY][blockX]);
     return(world[secY][secX][blockY][blockX]);
     
 }
@@ -103,6 +110,12 @@ function tileType(secY, secX, blockY, blockX){
 
     ]
 
+    var blockA = [];
+    var blockB = [];
+    var blockC = [];
+    var blockX = [];
+    var blockY = [];
+    var blockZ = [];
 
     /*var blockIndex = {
         0 : block1, // A big ole empty block.
@@ -113,10 +126,85 @@ function tileType(secY, secX, blockY, blockX){
 //bridger takes blocks from the block library and connects them with short arrays
 function bridger(){
     var world = [
-        [block1,block2,block1],
+        [block2,block2,block1],
         [block1,block1,block1]
     ];
-    console.log(world);
+    x = rando();
+    bridgeAB = rando();
+    bridgeBC = rando();
+    bridgeAX = rando();
+    bridgeBY = rando();
+    bridgeCZ = rando();
+    bridgeXY = rando();
+    bridgeYZ = rando();
+    blockA = reBuilder(world[0][0]);
+    blockA[bridgeAB][9] = 1;
+    blockA[9][bridgeAX] = 1;
+    blockB = reBuilder(world[0][1]);
+    blockB[bridgeAB][0] = 1;
+    blockB[9][bridgeBY] = 1;
+    blockB[bridgeBC][9] = 1;
+    blockC = reBuilder(world[0][2]);
+    blockC[bridgeBC][0] = 1;
+    blockC[9][bridgeCZ] = 1;
+    blockX = reBuilder(world[1][0]);
+    blockX[bridgeXY][9] = 1;
+    blockX[0][bridgeAX] = 1;
+    blockY = reBuilder(world[1][1]);
+    blockY[bridgeXY][0] = 1;
+    blockY[0][bridgeBY] = 1;
+    blockY[bridgeYZ][9] = 1;
+    blockZ = reBuilder(world[1][2]);
+    blockZ[bridgeYZ][0] = 1;
+    blockZ[0][bridgeCZ] = 1;
+
+
+    world = [
+        [blockA,blockB,blockC],
+        [blockX,blockY,blockZ]
+    ];
+
+    //console.log(world);
     return(world);
                  
+}
+
+function rando(){
+
+    var x = Math.random();
+    x = x * 10;
+    x = Math.round(x);
+    while(x == 0 || x == 9 || x == 10){
+        var x = Math.random();
+        x = x * 10;
+        x = Math.round(x);
+    }
+    console.log(x);
+    return(x);
+}
+
+//rebuilder adds modified versions of the selected block types
+function reBuilder(oldBlock){
+    var newBlock = [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0]
+    ];
+    for(y = 0; y < oldBlock.length; y ++){
+        for(x = 0; x < oldBlock[y].length; x ++){
+            newBlock[y][x] = oldBlock[y][x];
+        }
+    }
+
+    /*newBlock[rando()][9] = 1;
+    newBlock[9][rando()] = 1;*/
+    return(newBlock);
+    
 }
