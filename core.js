@@ -5,18 +5,37 @@
 */
 
 //core functionality variables, like frame speed
-var frameSpeed = 64;
-var world; 
+var frameSpeed = 32;
+var world;
+var world2D;
+var player = {
+    xPos : 0,
+    yPos : 0,
+    lives : 0,
+    speed : 2,
+    offsetX : 0,
+    offsetY : 0,
+    direction : "right",
+    dBuffer : "right"
+}
 //end of core variables
+
+//Starts the whole thing off, called at the end of body div, in the html file to make sure all requisite divisions 
+//available.
 function start(){
+
     console.log("start");
     mapGen();
-
+    ninjaGen();
     setInterval(main, frameSpeed);
 }
 
 //Gameloop that updates every x ms set by framespeed.
 function main(){
+    movePlayer();
+    drawPlayer();
+    collision();
+    
     //console.log("Main");
 }
 
@@ -27,57 +46,167 @@ var mapKey = {
     3 : 'onigiri'
 }
 
+// Used on collision with consumable items on the map, only changing when it needs to.
 function drawMap(){
+    element = document.getElementById('loc'+player.yPos+'_'+player.xPos);
+    element.className = "";
+    console.log(element);
+    
 
 }
 
+// Draws on frame update
+function drawPlayer(){
+
+    document.getElementById('ninjaman').style.left = ((40 * player.xPos)+player.offsetX)+'px';
+    document.getElementById('ninjaman').style.top = ((40 * player.yPos)+player.offsetY)+'px';
+
+
+}
+
+//handles things that need to happen only once per  20 frames, aka on offset == 0
+function step(){
+    drawMap();
+}
+
+document.onkeydown = function(e){
+    console.log(e);
+    if (e.keyCode == 39){
+        player.dBuffer = "right";
+    }
+    if (e.keyCode == 40){
+        player.dBuffer = "down";
+    }
+    if (e.keyCode == 37){
+        player.dBuffer = "left";
+    }
+    if (e.keyCode == 38){
+        player.dBuffer = "up";
+    }
+}
+
+//movement is achieved by pointing ninjaman in a direction.  He will move in the selected direction
+//until direction is changed, or he hits a wall
+function movePlayer(){
+    /*console.log("x"+player.xPos);
+    console.log("y"+player.yPos);
+    console.log("world x = "+world2D[player.yPos][player.xPos])*/
+
+    if (player.direction == "right"){
+        if(world2D[player.yPos][player.xPos+1] != 0){
+            if (player.offsetX < 38){
+                player.offsetX += player.speed;
+            } else {
+                player.offsetX = 0;
+                player.xPos++;
+                player.direction = player.dBuffer;
+                step();
+            }
+        } else {
+            player.offsetX = 0;
+            player.offsetY = 0;
+            player.direction = player.dBuffer;
+        }
+    }
+
+    if (player.direction == "left"){
+        if(world2D[player.yPos][player.xPos-1] != 0){
+            if (player.offsetX > -38){
+                player.offsetX -= player.speed;
+            } else {
+                player.offsetX = 0;
+                player.xPos--;
+                player.direction = player.dBuffer;
+                step();
+            }
+        } else {
+            player.offsetX = 0;
+            player.offsetY = 0;
+            player.direction = player.dBuffer;
+        }
+    }
+
+    if (player.direction == "down"){
+        if(world2D[player.yPos+1][player.xPos] != 0){
+            if (player.offsetY < 38) {
+                player.offsetY += player.speed;
+            } else{
+                player.offsetY = 0;
+                player.yPos++;
+                player.direction = player.dBuffer;
+                step();
+
+            }
+        } else {
+            player.offsetX = 0;
+            player.offsetY = 0;
+            player.direction = player.dBuffer;
+        }
+
+
+    }
+
+    if (player.direction == "up"){
+        if(world2D[player.yPos-1][player.xPos] != 0){
+            if (player.offsetY > -38) {
+                player.offsetY -= player.speed;
+            } else{
+                player.offsetY = 0;
+                player.yPos--;
+                player.direction = player.dBuffer;
+                step();
+
+            }
+        } else {
+            player.offsetX = 0;
+            player.offsetY = 0;
+            player.direction = player.dBuffer;
+        }
+
+
+    }
+}
+
+function collision(){
+    if(world2D[player.yPos][player.xPos] == 2){
+        world2D[player.yPos][player.xPos] = 1;
+    }
+    if(world2D[player.yPos][player.xPos] == 3){
+        world2D[player.yPos][player.xPos] = 1;
+    }
+    //drawMap();
+}
+
+//Initial map generation.  global world variable is sent to bridger to be rebuilt into unique blocks,
+//then connected through "bridges," which are just holes in the walls of the cells.  
+//will later connect them with tunnels.
+//mapBuilder takes the bridged world array and turns it into a 2D array, cutting the draw time 
+//and generation time down significantly.  coordinate system preserved.
 function mapGen(){
 
     world = bridger();
-    var world2D = mapBuilder(world);
+    world2D = mapBuilder(world);
     var content = " ";
     document.getElementById('map').innerHTML = content;
-    for(sectionY = 0; sectionY < world.length; sectionY++ ){
-        for(sectionX = 0; sectionX < world[sectionY].length; sectionX++){
-            for(blockY = 0; blockY < block1.length; blockY++){
-                for(blockX = 0; blockX < block1[0].length; blockX++){
-                    /*var address = addressMachine(sectionY, sectionX,blockY,blockX);
-                    content += "<div id = 'loc"+address+"' class = '"+mapKey[tileType(sectionY,sectionX,blockY,blockX)]+"' style = \"top:"+pixelPlaceY(sectionY,blockY)+"px; "; 
-                    content += "left:"+pixelPlaceX(sectionX,blockX)+"px;\"></div>";
-                    document.getElementById('map').innerHTML = content;*/
-                }
-            }
+
+    for(y = 0; y < world2D.length; y++){
+        for(x = 0; x < world2D[y].length; x++){
+            content += "<div id = loc"+y+"_"+x+" class = '"+mapKey[world2D[y][x]]+"' style = \" top: "+(y*40)+"px; ";
+            content += "left: "+(x*40)+"px;\"></div>";
         }
     }
-    console.log(world);
+    document.getElementById('map').innerHTML = content;
 }
 
-// calculates the pixel location for a block to draw, Y axis
-function pixelPlaceY(secY, blockY){
-    return((400 * secY)+(40 * blockY));
-}
+//creates and places ninjaman in the level, probably always spot 1,1
+function ninjaGen(){
 
-// calculates the pixel location for a block to draw, X axis
-function pixelPlaceX(secX, blockX){
-    return((400 * secX)+(40 * blockX));
-}
-
-// creates addresses so that each block can be selected by ID
-function addressMachine(secY, secX, blockY,blockX){
-   var address = ""+secY+""+secX+""+blockY+""+blockX;
-   //This was unneccessary come to find out. The "" sections that is.
-   return(address);
-}
-
-//returns the tile type for the sake of readability.
-function tileType(secY, secX, blockY, blockX){
-    //console.log("type"+world[secY][secX][blockY][blockX]);
-    return(world[secY][secX][blockY][blockX]);
+    var content = "<div id = 'ninjaman' class = 'ninjaman'></div>"
+    document.getElementById('map').innerHTML += content;
+    player.xPos = 1; player.yPos = 1;
+    player.lives = 3;
     
 }
-
-
-
 
 //block library holds predefined map blocks and can be called upon to plop them out.
 // BLOCK LIBRARY GLOBAL//
@@ -277,7 +406,7 @@ function mapBuilder(world){
     }
     console.log(map);
     
-
+    return(map);
 
 }
 
