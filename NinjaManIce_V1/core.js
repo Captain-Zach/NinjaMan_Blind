@@ -19,6 +19,9 @@ var player = {
     direction : "right",
     dBuffer : "right"
 }
+var pumpky = {
+    speed : 2
+}
 //end of core variables
 
 //Starts the whole thing off, called at the end of body div, in the html file to make sure all requisite divisions 
@@ -246,12 +249,12 @@ function ninjaGen(){
         [0,0,0,0,0,0,0,0,0,0],
         [0,2,2,2,0,2,2,2,2,0],
         [0,2,2,2,2,2,2,2,2,0],
-        [0,2,2,2,2,2,2,0,2,0],
-        [0,2,2,2,2,2,0,2,2,0],
+        [0,2,2,2,2,2,0,0,0,0],
+        [0,2,2,2,2,2,2,2,3,0],
+        [0,2,2,2,2,0,0,0,0,0],
+        [0,2,2,2,2,0,1,0,3,0],
+        [0,2,0,2,2,0,0,0,2,0],
         [0,2,2,2,2,2,2,2,2,0],
-        [0,2,2,2,2,2,2,2,2,0],
-        [0,2,0,2,2,2,2,0,2,0],
-        [0,2,2,2,2,2,2,0,2,0],
         [0,0,0,0,0,0,0,0,0,0],
 
     ];
@@ -326,6 +329,33 @@ function ninjaGen(){
 
     ];
 
+    var block9 = [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,1,1,1,1,1,1,1,0],
+        [0,1,0,0,1,1,0,0,1,0],
+        [0,1,0,1,1,1,1,0,1,0],
+        [0,1,0,1,1,1,1,0,1,0],
+        [0,1,0,1,1,1,1,0,1,0],
+        [0,0,0,0,0,0,0,0,0,0],
+
+    ];
+
+    var tunnel1 = [
+        [0],
+        [1],
+        [1],
+        [1],
+        [1],
+        [1],
+        [1],
+        [1],
+        [1],
+        [0]
+    ]
+
     var blockA = [];
     var blockB = [];
     var blockC = [];
@@ -341,7 +371,8 @@ function ninjaGen(){
         5 : block5,
         6 : block6,
         7 : block7,
-        8 : block8
+        8 : block8,
+        9 : block9
     }
 // BLOCK LIBRARY GLOBAL.//  
 
@@ -349,7 +380,7 @@ function ninjaGen(){
 function bridger(){
     var world = [
         [blockIndex[rando()],blockIndex[rando()],blockIndex[rando()]],
-        [blockIndex[rando()],blockIndex[rando()],blockIndex[rando()]]
+        [blockIndex[rando()],blockIndex[9],blockIndex[rando()]]
     ];
     x = rando();
     bridgeAB = rando();
@@ -360,23 +391,50 @@ function bridger(){
     bridgeXY = rando();
     bridgeYZ = rando();
     blockA = reBuilder(world[0][0]);
+    blockB = reBuilder(world[0][1]);
+    blockC = reBuilder(world[0][2]);
+    blockX = reBuilder(world[1][0]);
+    blockY = reBuilder(world[1][1]);
+    blockZ = reBuilder(world[1][2]);
+
+
+
+    while(blockA[bridgeAB][9-1]== 0 || blockB[bridgeAB][1] == 0){
+        bridgeAB = rando();
+    }
+    while(blockB[bridgeBC][9-1]== 0 || blockC[bridgeBC][1] == 0){
+        bridgeBC = rando();
+    }
+    while(blockX[bridgeXY][9-1]== 0 || blockY[bridgeXY][1] == 0){
+        bridgeXY = rando();
+    }
+    while(blockY[bridgeYZ][9-1]== 0 || blockZ[bridgeYZ][1] == 0){
+        bridgeYZ = rando();
+    }
+    while(blockB[8][bridgeBY]== 0 || blockY[1][bridgeBY] == 0){
+        bridgeBY = rando();
+    }
+    while(blockA[8][bridgeAX]== 0 || blockX[1][bridgeAX] == 0){
+        bridgeAX = rando();
+    }
+    while(blockC[8][bridgeCZ]== 0 || blockZ[1][bridgeCZ] == 0){
+        bridgeCZ = rando();
+    }
+    
+
+    blockA[1][1] = 1;
     blockA[bridgeAB][9] = 1;
     blockA[9][bridgeAX] = 1;
-    blockB = reBuilder(world[0][1]);
     blockB[bridgeAB][0] = 1;
     blockB[9][bridgeBY] = 1;
     blockB[bridgeBC][9] = 1;
-    blockC = reBuilder(world[0][2]);
     blockC[bridgeBC][0] = 1;
     blockC[9][bridgeCZ] = 1;
-    blockX = reBuilder(world[1][0]);
     blockX[bridgeXY][9] = 1;
     blockX[0][bridgeAX] = 1;
-    blockY = reBuilder(world[1][1]);
     blockY[bridgeXY][0] = 1;
     blockY[0][bridgeBY] = 1;
     blockY[bridgeYZ][9] = 1;
-    blockZ = reBuilder(world[1][2]);
     blockZ[bridgeYZ][0] = 1;
     blockZ[0][bridgeCZ] = 1;
 
