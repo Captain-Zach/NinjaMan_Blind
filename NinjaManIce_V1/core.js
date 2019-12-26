@@ -1,11 +1,11 @@
 /*
 *This is the core file of our NinjaMan Ice edition. It's called that due to it being a
-*some thing from scratch, built with no references.  The hope is to replicate the NinjaMan
+*something from scratch, built with no references.  The hope is to replicate the NinjaMan
 *application at the basic level with a better set up for random maps, and pathfinding. 
 */
 
 //core functionality variables, like frame speed
-var score = 0;
+var score = 10;
 var frameSpeed = 32;
 var world;
 var world2D;
@@ -16,11 +16,17 @@ var player = {
     speed : 2,
     offsetX : 0,
     offsetY : 0,
-    direction : "right",
-    dBuffer : "right"
+    direction : "up",
+    dBuffer : "up"
 }
 var pumpky = {
-    speed : 2
+    speed : 2,
+    xPos : 14,
+    yPos : 17,
+    offsetX: 0,
+    offsetY: 0,
+    direction : "up",
+    dBuffer : "right"
 }
 //end of core variables
 
@@ -31,13 +37,18 @@ function start(){
     console.log("start");
     mapGen();
     ninjaGen();
+    enemyGen();
+    pathfinder(pumpky.yPos,pumpky.xPos);
     setInterval(main, frameSpeed);
+    //setInterval(AIMachine, 1000);
 }
 
 //Gameloop that updates every x ms set by framespeed.
 function main(){
     movePlayer();
     drawPlayer();
+    movePumpky();
+    drawPumpky();
     collision();
     
     //console.log("Main");
@@ -50,11 +61,59 @@ var mapKey = {
     3 : 'onigiri'
 }
 
+var AIKey = {
+    aiWander : true,
+    aiChase : false,
+    aiScatter : false
+}
+
+//AI controller machine. sets ai behavior between wander, scatter, chase.
+var ticker = 8;
+var stateCounter = 1;
+
+function AIMachine(){
+    //machine ticks once per second
+    ticker--;
+    //randomwander bool = true
+    console.log(AIKey.aiWander+" "+AIKey.aiChase+" "+AIKey.aiScatter)
+    if(stateCounter == 1 && ticker > 0){
+        AIKey.aiWander = true;
+    }
+    if(stateCounter == 1 && ticker == 0){
+        stateCounter++;
+        ticker = 10;
+        AIKey.aiWander = false;
+        AIKey.aiScatter = true;
+    }
+    if(stateCounter == 2 && ticker > 0){
+        AIKey.aiScatter = true;
+    }
+    if(stateCounter == 2 && ticker == 0){
+        stateCounter++
+        ticker = 20;
+        AIKey.aiScatter = false;
+        AIKey.aiChase = true;
+        pathfinder(pumpky.xPos,pumpky.yPos);
+    }
+    if(stateCounter == 3 && ticker > 0){
+        AIKey.aiChase = true;
+    }
+    if(stateCounter == 3 && ticker == 0){
+        stateCounter = 2;
+        ticker = 3;
+        AIKey.aiChase = false;
+        AIKey.aiScatter = true;
+    }
+
+
+
+}
+
 // Used on collision with consumable items on the map, only changing when it needs to.
 function drawMap(){
     element = document.getElementById('loc'+player.yPos+'_'+player.xPos);
     element.className = "";
-    console.log(element);
+    //console.log(element);
     
 
 }
@@ -68,14 +127,144 @@ function drawPlayer(){
 
 }
 
+function drawPumpky(){
+
+        document.getElementById('pumpky').style.left = ((40 * pumpky.xPos)+pumpky.offsetX)+'px';
+        document.getElementById('pumpky').style.top = ((40 * pumpky.yPos)+pumpky.offsetY)+'px';
+}
+
+var pumpkyBuffer = [];
+
+function pathfinder(srcX, srcY){
+    var pathgrid = [];
+    var waygrid = [];
+    var row = [];
+//    pathgrid = world2D;
+
+    for(y = 0; y < world2D.length; y++){
+        for(x = 0; x < world2D[y].length; x++){
+            row.push(world2D[y][x]);
+            //console.log(row);
+        }
+        pathgrid.push(row);
+        row = [];
+    }
+    for(y = 0; y < world2D.length; y++){
+        for(x = 0; x < world2D[y].length; x++){
+            row.push(world2D[y][x]);
+            //console.log(row);
+        }
+        waygrid.push(row);
+        row = [];
+    }
+    count = 1;
+    yCoord = srcY;
+    xCoord = srcX;
+    node = [srcY,srcX,count];
+    queue = [];
+    found = false;
+
+        //pathgrid[srcY][srcX]
+        queue.push(node);
+        //increment count so that all viable nodes can recieve 
+        while(found == false){
+        //check up for walls
+        if(pathgrid[yCoord-1][xCoord] != 0){
+            queue.push([yCoord-1,xCoord,queue[0][2]+1]);
+            pathgrid[yCoord-1][xCoord] = 0;
+            waygrid[yCoord-1][xCoord] = queue[0][2]+1;
+        }
+        //check right for walls
+        if(pathgrid[yCoord][xCoord+1] != 0){
+            queue.push([yCoord,xCoord+1,queue[0][2]+1]);
+            pathgrid[yCoord][xCoord+1] = 0;
+            waygrid[yCoord][xCoord+1] = queue[0][2]+1;
+
+        }
+        //check down for walls
+        if(pathgrid[yCoord+1][xCoord] != 0){
+            queue.push([yCoord+1,xCoord,queue[0][2]+1]);
+            pathgrid[yCoord+1][xCoord] = 0;
+            waygrid[yCoord+1][xCoord] = queue[0][2]+1;
+
+        }
+        //check left for walls
+        if(pathgrid[yCoord][xCoord-1] != 0){
+            queue.push([yCoord,xCoord-1,queue[0][2]+1]);
+            pathgrid[yCoord][xCoord-1] = 0;
+            waygrid[yCoord][xCoord-1] = queue[0][2]+1;
+
+        }
+        pathgrid[yCoord][xCoord] = 0;
+        queue.shift();
+        yCoord=queue[0][0];
+        xCoord=queue[0][1];
+    
+        if(yCoord == player.yPos && xCoord == player.xPos){
+            found = true;
+            //console.log(pathgrid);
+            //console.log(waygrid);
+        }
+    }
+    var dirStack = [];
+    var chasePoint = [queue[0][0],queue[0][1]];
+    //console.log(queue[0][1]);
+    //console.log(waygrid);
+    var chaseCount = queue[0][2];
+    console.log(waygrid);
+    console.log(chaseCount);
+
+    //BACKTRACE
+    //There's some sort of problem here that's messing up the pathfinding.
+    while(chaseCount > 1){
+        console.log("chasepoint x: "+chasePoint[1]);
+        console.log("chasepoint y: "+chasePoint[0]);
+    
+        if(waygrid[chasePoint[0]+1][chasePoint[1]] == chaseCount -1){
+            console.log("down");
+            chasePoint[0] += 1;
+            chaseCount--;
+            dirStack.push("up");
+        }else if(waygrid[chasePoint[0]-1][chasePoint[1]] == chaseCount -1){
+            console.log("up");
+            chasePoint[0] -= 1;
+            chaseCount--;
+            dirStack.push("down");
+        }else if(waygrid[chasePoint[0]][chasePoint[1]+1] == chaseCount -1){
+            console.log("right");
+            chasePoint[1] += 1;
+            chaseCount--;
+            dirStack.push("left");
+        }else if(waygrid[chasePoint[0]][chasePoint[1]-1] == chaseCount -1){
+            console.log("left");
+            chasePoint[1] -= 1;
+            chaseCount--;
+            dirStack.push("right");
+        }else{
+            console.log("AAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHHHHH!!!!!!!!!!!");
+            chaseCount=0;
+            //dirStack.push("up");
+        }
+
+    }
+    //console.log(dirStack);
+    //console.log("y: "+chasePoint[0]+" X: "+chasePoint[1]);
+    pumpkyBuffer = dirStack;
+    //pumpkyBuffer.pop();
+    console.log(pumpkyBuffer);
+
+}
+
 //handles things that need to happen only once per  20 frames, aka on offset == 0
 function step(){
     drawMap();
+    pathfinder(pumpky.xPos,pumpky.yPos);
+
     document.getElementById('scoreboard').innerText = "SCORE: "+score;
 }
 
 document.onkeydown = function(e){
-    console.log(e);
+    //console.log(e);
     if (e.keyCode == 39){
         player.dBuffer = "right";
     }
@@ -172,6 +361,241 @@ function movePlayer(){
     }
 }
 
+function pumpkyStep(){
+    pathfinder(pumpky.xPos,pumpky.yPos);
+}
+
+function movePumpky(){
+
+    if(pumpkyBuffer[pumpkyBuffer.length-1] == "up"){
+        pumpky.offsetY -= pumpky.speed;
+        if(pumpky.offsetY < -38){
+            pumpky.offsetY = 0;
+            pumpky.offsetX = 0;
+            pumpky.yPos--;
+            pumpkyBuffer.pop();
+            pumpkyStep();
+        }
+    }
+    if(pumpkyBuffer[pumpkyBuffer.length-1] == "down"){
+        pumpky.offsetY += pumpky.speed;
+        if(pumpky.offsetY > 38){
+            pumpky.offsetY = 0;
+            pumpky.yPos++;
+            pumpkyBuffer.pop();
+
+            pumpkyStep();
+        }
+    }
+    if(pumpkyBuffer[pumpkyBuffer.length-1] == "right"){
+        pumpky.offsetX += pumpky.speed;
+        if(pumpky.offsetX > 38){
+            pumpky.offsetX = 0;
+            pumpky.xPos++;
+            pumpkyBuffer.pop();
+
+            pumpkyStep();
+        }
+    }
+    if(pumpkyBuffer[pumpkyBuffer.length-1] == "left"){
+        pumpky.offsetX -= pumpky.speed;
+        if(pumpky.offsetX < -38){
+            pumpky.offsetX = 0;
+            pumpky.xPos--;
+            pumpkyBuffer.pop();
+
+            pumpkyStep();
+        }
+    }
+    
+    //right movement
+    //console.log(pumpky.direction);
+    //console.log(pumpky.offsetX);
+    //console.log(pumpky.offsetY);
+    /*if(pumpky.direction == "right"){
+        if(world2D[pumpky.yPos][pumpky.xPos+1] != 0){
+            if(pumpky.offsetX < 38){
+                pumpky.offsetX += pumpky.speed;
+            } else{
+                pumpky.offsetX = 0;
+                pumpky.offsetY = 0;
+                pumpky.xPos++;
+                
+                //access buffer queue
+            }
+            if(pumpky.offsetX == 0){
+                
+                    console.log("chase direction change right");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+        }else{
+            pumpky.offsetX = 0;
+            pumpky.offsetY = 0;
+            //temp direction change for back and forth movement.
+            //pumpky.direction = "left";
+            console.log("stuckup");
+            pumpky.direction = "left";
+            if(pumpky.offsetX == 0){
+                
+                    console.log("chase direction change right");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+            
+            if(AIKey.aiWander == true){
+                //randomWander();
+            }
+        }
+    }
+
+    //left movement
+    if(pumpky.direction == "left"){
+        if(world2D[pumpky.yPos][pumpky.xPos-1] !=0){
+            if(pumpky.offsetX > -38){
+                pumpky.offsetX -= pumpky.speed;
+            } else{
+                pumpky.offsetX = 0;
+                pumpky.offsetX = 0;
+                pumpky.xPos--;
+                
+                
+            }
+            if(pumpky.offsetX == 0){
+                
+                    console.log("chase direction change left");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+        }else{
+            pumpky.offsetX = 0;
+            pumpky.offsetY = 0;
+            //temp direction change for back and forth
+            //pumpky.direction = "right";
+            if(pumpky.offsetX == 0){
+                
+                    console.log("chase direction change right");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                
+            }
+            
+            if(AIKey.aiWander == true){
+                //randomWander();
+            }        
+        }
+    }
+
+    //up movement
+    if(pumpky.direction == "up"){
+        if(world2D[pumpky.yPos-1][pumpky.xPos] != 0){
+            if(pumpky.offsetY > -38){
+                pumpky.offsetY -= pumpky.speed;
+            } else{
+                pumpky.offsetY = 0;
+                pumpky.offsetX = 0;
+                pumpky.yPos--;
+                
+            }
+            if(pumpky.offsetY == 0){
+                
+                    console.log("chase direction change up");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+        }else{
+            pumpky.offsetX = 0;
+            pumpky.offsetY = 0;
+            //temp direction change for up and down
+            //pumpky.direction = "down";
+            if(pumpky.offsetY == 0){
+                
+                    console.log("chase direction change right");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+            
+            if(AIKey.aiWander == true){
+                //randomWander();
+            }        
+        }
+    }
+
+    //down movement
+    if(pumpky.direction == "down"){
+        if(world2D[pumpky.yPos+1][pumpky.xPos] != 0){
+            if(pumpky.offsetY < 38){
+                pumpky.offsetY += pumpky.speed;
+            } else{
+                pumpky.offsetY = 0;
+                pumpky.offsetX = 0;
+                pumpky.yPos++;
+                
+            }
+            if(pumpky.offsetY == 0){
+                if(AIKey.aiChase == true){
+                    console.log("chase direction change down");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                }
+            }
+        }else{
+            pumpky.offsetX = 0;
+            pumpky.offsetY = 0;
+            //temp direction change for up and down
+            //pumpky.direction = "up";
+            if(pumpky.offsetY == 0){
+                
+                    console.log("chase direction change right");
+                    pumpky.direction = pumpkyBuffer[pumpkyBuffer.length-1];
+                    pumpkyBuffer.pop();
+                    pumpkyStep();
+                
+            }
+            
+            if(AIKey.aiWander == true){
+                //randomWander();
+
+            }        
+        }
+    }*/
+   
+
+
+}
+
+function randomWander(){
+
+    var tester = 0;
+    while(tester == 0 || tester == 5 || tester == 6 || tester == 7 || tester == 8 ){
+        tester = rando();
+    }
+    if(tester == 1){
+        pumpky.direction = "left";
+    }else if(tester == 2){
+        pumpky.direction = "right";
+    }else if(tester == 3){
+        pumpky.direction = "up";
+    }else if(tester == 4){
+        pumpky.direction = "down";
+    }else{
+        console.log("out of bounds")
+        console.log("try again");
+        randomWander();
+    }
+}
+
 function collision(){
     if(world2D[player.yPos][player.xPos] == 2){
         world2D[player.yPos][player.xPos] = 1;
@@ -208,11 +632,16 @@ function mapGen(){
 //creates and places ninjaman in the level, probably always spot 1,1
 function ninjaGen(){
 
-    var content = "<div id = 'ninjaman' class = 'ninjaman'></div>"
+    var content = "<div id = 'ninjaman' class = 'ninjaman'></div>";
     document.getElementById('map').innerHTML += content;
     player.xPos = 1; player.yPos = 1;
     player.lives = 3;
     
+}
+
+function enemyGen(){
+    var content = "<div id = 'pumpky' class = 'pumpky'></div>";
+    document.getElementById('map').innerHTML += content;
 }
 
 //block library holds predefined map blocks and can be called upon to plop them out.
@@ -458,15 +887,15 @@ function mapBuilder(world){
             for (ext = 0; ext < world[x].length; ext++){
                 for (point = 0; point < world[x][ext][y].length; point++){
                     row.push(world[x][ext][y][point]);
-                    console.log("row #: "+point);
+                    //console.log("row #: "+point);
                 }
-                console.log(row);
+                //console.log(row);
             }
             map.push(row);
             row = [];
         }
     }
-    console.log(map);
+    //console.log(map);
     
     return(map);
 
@@ -484,7 +913,7 @@ function rando(){
         x = x * 10;
         x = Math.round(x);
     }
-    console.log(x);
+    //console.log(x);
     return(x);
 }
 
